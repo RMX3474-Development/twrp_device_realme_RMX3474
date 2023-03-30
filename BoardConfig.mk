@@ -5,6 +5,7 @@
 #
 
 DEVICE_PATH := device/realme/RMX3474
+TARGET_SUPPORTS_64_BIT_APPS  := false
 
 # For building with minimal manifest
 ALLOW_MISSING_DEPENDENCIES := true
@@ -19,14 +20,14 @@ TARGET_ARCH_VARIANT := armv8-a
 TARGET_CPU_ABI := arm64-v8a
 TARGET_CPU_ABI2 :=
 TARGET_CPU_VARIANT := generic
-TARGET_CPU_VARIANT_RUNTIME := kryo670
+TARGET_CPU_VARIANT_RUNTIME := kryo300
 
 TARGET_2ND_ARCH := arm
 TARGET_2ND_ARCH_VARIANT := armv7-a-neon
 TARGET_2ND_CPU_ABI := armeabi-v7a
 TARGET_2ND_CPU_ABI2 := armeabi
 TARGET_2ND_CPU_VARIANT := $(TARGET_CPU_VARIANT)
-TARGET_2ND_CPU_VARIANT_RUNTIME := $(TARGET_CPU_VARIANT_RUNTIME)
+TARGET_2ND_CPU_VARIANT_RUNTIME := cortex-a75
 
 TARGET_BOARD_SUFFIX := _64
 TARGET_USES_64_BIT_BINDER := true
@@ -44,27 +45,14 @@ TARGET_USES_HARDWARE_QCOM_BOOTCTRL := true
 QCOM_BOARD_PLATFORMS += $(TARGET_BOARD_PLATFORM)
 
 # Kernel
-BOARD_KERNEL_CMDLINE := console=ttyMSM0,115200n8 earlycon=msm_geni_serial,0x04C8C000 androidboot.hardware=qcom androidboot.console=ttyMSM0 androidboot.memcg=1 lpm_levels.sleep_disabled=1 video=vfb:640x400,bpp=32,memsize=3072000 msm_rtb.filter=0x237 service_locator.enable=1 androidboot.usbcontroller=4e00000.dwc3 swiotlb=0 loop.max_part=7 cgroup.memory=nokmem,nosocket iptable_raw.raw_before_defrag=1 ip6table_raw.raw_before_defrag=1 kpti=off buildvariant=user androidboot.selinux=permissive
-BOARD_KERNEL_PAGESIZE := 4096
-BOARD_KERNEL_BASE := 0x00000000
-TARGET_KERNEL_ARCH := arm64
-TARGET_KERNEL_HEADER_ARCH := arm64
-TARGET_KERNEL_CLANG_COMPILE := true
 BOARD_KERNEL_IMAGE_NAME := kernel
 BOARD_BOOT_HEADER_VERSION := 3
-BOARD_MKBOOTIMG_ARGS += --dtb $(TARGET_PREBUILT_DTB)
 BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION)
-BOARD_MKBOOTIMG_ARGS += --pagesize $(BOARD_KERNEL_PAGESIZE) --board ""
 BOARD_MKBOOTIMG_ARGS += --cmdline "twrpfastboot=1"
 
 TARGET_FORCE_PREBUILT_KERNEL := true
 ifeq ($(TARGET_FORCE_PREBUILT_KERNEL),true)
 TARGET_PREBUILT_KERNEL := $(DEVICE_PATH)/prebuilt/kernel
-endif
-
-TARGET_FORCE_PREBUILT_DTBO := true
-ifeq ($(TARGET_FORCE_PREBUILT_DTBO),true)
-BOARD_PREBUILT_DTBOIMAGE := $(DEVICE_PATH)/prebuilt/dtbo.img
 endif
 
 # Android Verified Boot
@@ -84,25 +72,19 @@ BOARD_BUILD_SYSTEM_ROOT_IMAGE := false
 AB_OTA_UPDATER := true
 
 AB_OTA_PARTITIONS += \
-    boot \
-    dtbo \
     odm \
     product \
     system \
     system_ext \
-    vbmeta \
-    vbmeta_system \
-    vbmeta_vendor \
-    vendor \
-    vendor_boot
+    vendor
 
 # Partitions
 BOARD_BOOTIMAGE_PARTITION_SIZE := 167772160
-
-# Dynamic Partition
+BOARD_RECOVERYIMAGE_PARTITION_SIZE := 167772160
+BOARD_HAS_LARGE_FILESYSTEM := true
 BOARD_SUPER_PARTITION_SIZE := 11190403072
 BOARD_SUPER_PARTITION_GROUPS := qti_dynamic_partitions
-BOARD_QTI_DYNAMIC_PARTITIONS_SIZE := 5595201536
+BOARD_QTI_DYNAMIC_PARTITIONS_SIZE := 11190403072
 BOARD_QTI_DYNAMIC_PARTITIONS_PARTITION_LIST := system system_ext product vendor odm
 
 # SAR
