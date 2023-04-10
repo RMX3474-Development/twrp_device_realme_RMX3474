@@ -6,7 +6,7 @@ import /odm/etc/ueventd.rc
 # Modify for: multi projects using different bdf, adding persist into firmware_directories
 # firmware_directories /etc/firmware/ /odm/firmware/ /vendor/firmware/ /firmware/image/
 # else /* OPLUS_FEATURE_WIFI_BDF */
-firmware_directories /etc/firmware/ /odm/firmware/ /mnt/vendor/persist/copy/ /odm/etc/wifi/ /mnt/vendor/persist/ /vendor/firmware/ /vendor/firmware_mnt/image/qca6490/ /firmware/image/ /data/oplus/fw_update/
+firmware_directories /etc/firmware/ /odm/firmware/ /mnt/vendor/persist/copy/ /odm/etc/wifi/ /mnt/vendor/persist/ /vendor/firmware/ /firmware/image/ /data/oplus/fw_update/
 # endif /* OPLUS_FEATURE_WIFI_BDF */
 
 uevent_socket_rcvbuf_size 16M
@@ -87,6 +87,7 @@ subsystem dma_heap
 #ifdef OPLUS_FEATURE_STORAGE_TOOL
 #Xuweijie1@BSP.Storage , 20200601. add for Memory Monitor
 /dev/sg3         0600   system     system
+/dev/block/mmcblk0p1 0600   system     system
 #endif /* OPLUS_FEATURE_STORAGE_TOOL */
 
 # sysfs properties
