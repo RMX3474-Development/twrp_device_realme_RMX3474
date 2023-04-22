@@ -30,7 +30,16 @@ import /init.recovery.qcom_decrypt.rc
 on init
     write /sys/class/backlight/panel0-backlight/brightness 200
     start boot-hal-1-1
+    start health-hal-2-1
     setprop sys.usb.configfs 1
+
+    # Create location for fs_mgr to store abbreviated output from filesystem
+    # checker programs.
+    mkdir /dev/fscklogs 0770 root system
+
+    # Set fscklog permission
+    chown root system /dev/fscklogs/log
+    chmod 0770 /dev/fscklogs/log
 
 on property:ro.boot.usbcontroller=*
     setprop sys.usb.controller ${ro.boot.usbcontroller}
@@ -44,3 +53,15 @@ on fs
 
 on boot
     setprop sys.usb.config mtp,adb
+
+on property:twrp.modules.loaded=true
+    # Load ADSP firmware for PMIC
+    insmod /vendor/lib/modules/q6_pdr_dlkm.ko
+    insmod /vendor/lib/modules/q6_notifier_dlkm.ko
+    insmod /vendor/lib/modules/snd_event_dlkm.ko
+    insmod /vendor/lib/modules/apr_dlkm.ko
+    insmod /vendor/lib/modules/adsp_loader_dlkm.ko
+    wait /sys/kernel/boot_adsp/boot
+    write /sys/kernel/boot_adsp/boot 1
+    wait /sys/class/power_supply/battery
+

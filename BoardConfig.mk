@@ -6,6 +6,11 @@
 
 DEVICE_PATH := device/realme/RMX3474
 
+# Build variants
+TWRP_BUILD_ALPHA := false
+TWRP_BUILD_BETA := true
+TWRP_BUILD_STABLE := false
+
 # For building with minimal manifest
 ALLOW_MISSING_DEPENDENCIES := true
 BUILD_BROKEN_DUP_RULES := true
@@ -46,20 +51,35 @@ TARGET_USES_HARDWARE_QCOM_BOOTCTRL := true
 QCOM_BOARD_PLATFORMS += $(TARGET_BOARD_PLATFORM)
 
 # Kernel
-BOARD_BOOT_HEADER_VERSION := 3
-BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION)
+BOARD_KERNEL_CMDLINE := console=ttyMSM0,115200n8 earlycon=msm_geni_serial,0x04C8C000 androidboot.hardware=qcom androidboot.console=ttyMSM0 androidboot.memcg=1 lpm_levels.sleep_disabled=1 video=vfb:640x400,bpp=32,memsize=3072000 msm_rtb.filter=0x237 service_locator.enable=1 androidboot.usbcontroller=4e00000.dwc3 swiotlb=0 loop.max_part=7 cgroup.memory=nokmem,nosocket iptable_raw.raw_before_defrag=1 ip6table_raw.raw_before_defrag=1 kpti=off buildvariant=user androidboot.selinux=permissive
+BOARD_KERNEL_PAGESIZE := 4096
+BOARD_KERNEL_BASE := 0x00000000
 BOARD_KERNEL_IMAGE_NAME := kernel
-TARGET_KERNEL_CONFIG := gki_defconfig
-TARGET_KERNEL_SOURCE := kernel/realme/RMX3474
+BOARD_BOOT_HEADER_VERSION := 3
+TARGET_KERNEL_ARCH := arm64
+TARGET_KERNEL_HEADER_ARCH := arm64
+TARGET_KERNEL_CLANG_COMPILE := true
+BOARD_MKBOOTIMG_ARGS += --dtb $(TARGET_PREBUILT_DTB)
+BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION)
+BOARD_MKBOOTIMG_ARGS += --pagesize $(BOARD_KERNEL_PAGESIZE) --board ""
+BOARD_MKBOOTIMG_ARGS += --cmdline "twrpfastboot=1"
 
 # Kernel - prebuilt
-TARGET_FORCE_PREBUILT_KERNEL := true
+TARGET_FORCE_PREBUILT_KERNEL := true # use prebuilt kernel right now
 ifeq ($(TARGET_FORCE_PREBUILT_KERNEL),true)
 TARGET_PREBUILT_KERNEL := $(DEVICE_PATH)/prebuilt/kernel
+else
+TARGET_KERNEL_CONFIG := gki_defconfig
+TARGET_KERNEL_SOURCE := kernel/realme/RMX3474
 endif
 
 # DTBO - prebuilt
 BOARD_PREBUILT_DTBOIMAGE := $(DEVICE_PATH)/prebuilt/dtbo.img
+BOARD_KERNEL_SEPARATED_DTBO := true
+BOARD_INCLUDE_RECOVERY_DTBO := true
+
+# DTB - prebuilt
+TARGET_PREBUILT_DTB := $(DEVICE_PATH)/prebuilt/dtb
 
 # Android Verified Boot
 BOARD_AVB_ENABLE := true
@@ -83,28 +103,32 @@ AB_OTA_PARTITIONS += \
     system_ext \
     vbmeta \
     vbmeta_system \
-    vbmeta_vendor \
     vendor \
     vendor_boot
 
-# A/B Recovery Installer
+# A/B Recovery Installer - use only if building stable version
+ifeq ($(TWRP_BUILD_STABLE),true)
 USE_RECOVERY_INSTALLER := true
 RECOVERY_INSTALLER_PATH := $(DEVICE_PATH)/installer
+endif
 
 # Partitions
 BOARD_BOOTIMAGE_PARTITION_SIZE := 167772160
-BOARD_RECOVERYIMAGE_PARTITION_SIZE := 167772160
-BOARD_SUPER_PARTITION_SIZE := 9126805504
+BOARD_SUPER_PARTITION_SIZE := 11190403072
 BOARD_SUPER_PARTITION_GROUPS := qti_dynamic_partitions
-BOARD_QTI_DYNAMIC_PARTITIONS_SIZE := 9122611200 # BOARD_SUPER_PARTITION_SIZE - 4MB
+BOARD_QTI_DYNAMIC_PARTITIONS_SIZE := 5595201536
 BOARD_QTI_DYNAMIC_PARTITIONS_PARTITION_LIST := system system_ext product vendor odm
 
 # SAR
 BOARD_ROOT_EXTRA_FOLDERS := bluetooth dsp firmware persist
 BOARD_SUPPRESS_SECURE_ERASE := true
 
+# System properties
+TARGET_SYSTEM_PROP += $(DEVICE_PATH)/system.prop
+
 # FS
 BOARD_HAS_LARGE_FILESYSTEM := true
+BOARD_SYSTEMIMAGE_PARTITION_TYPE := ext4
 BOARD_USERDATAIMAGE_FILE_SYSTEM_TYPE := f2fs
 BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
 TARGET_COPY_OUT_VENDOR := vendor
@@ -129,7 +153,13 @@ PLATFORM_SECURITY_PATCH := 2099-12-31
 PLATFORM_VERSION := 99.87.36
 PLATFORM_VERSION_LAST_STABLE := $(PLATFORM_VERSION)
 
-# TWRP Configuration
+# Recovery specific build flags
+TARGET_USE_CUSTOM_LUN_FILE_PATH := /config/usb_gadget/g1/functions/mass_storage.0/lun.%d/file
+TARGET_RECOVERY_PIXEL_FORMAT := "RGBX_8888"
+TARGET_RECOVERY_QCOM_RTC_FIX := true
+RECOVERY_SDCARD_ON_DATA := true
+
+# TWRP specific build flags
 TW_THEME := portrait_hdpi
 TW_EXTRA_LANGUAGES := true
 TW_INCLUDE_NTFS_3G := true
@@ -151,11 +181,20 @@ TW_FRAMERATE := 60
 TW_INCLUDE_REPACKTOOLS := true
 TW_INCLUDE_RESETPROP := true
 TW_INCLUDE_LIBRESETPROP := true
-TARGET_RECOVERY_PIXEL_FORMAT := "RGBX_8888"
-TARGET_RECOVERY_QCOM_RTC_FIX := true
-RECOVERY_SDCARD_ON_DATA := true
-
+TW_BACKUP_EXCLUSIONS := /data/fonts
 TWRP_INCLUDE_LOGCAT := true
 TARGET_USES_LOGD := true
 
-TW_DEVICE_VERSION := by pluxurylord
+# TWRP load modules
+TW_LOAD_VENDOR_MODULES := "adsp_loader_dlkm.ko apr_dlkm.ko q6_notifier_dlkm.ko q6_pdr_dlkm.ko snd_event_dlkm.ko"
+
+# TWRP version
+ifeq ($(TWRP_BUILD_ALPHA),true)
+TW_DEVICE_VERSION := Alpha
+endif
+ifeq ($(TWRP_BUILD_BETA),true)
+TW_DEVICE_VERSION := Beta
+endif
+ifeq ($(TWRP_BUILD_STABLE),true)
+TW_DEVICE_VERSION := Stable
+endif
